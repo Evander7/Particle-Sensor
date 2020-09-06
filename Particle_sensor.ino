@@ -1,18 +1,31 @@
+// APSS Lab particle sensor code
+// Reads from an SDS011 dust sensor, and displays PM10 and PM2.5 levels on a dot-matrix screen
+// Also has an RGB light for... reasons ;P
+// Code Author: Jonathan Mace, 6 September 
+// Dust sensor case design by Andrew Battley
+// All code is very valuable IP, please do not leave facing windows
 
 // include the library code:
 #include <LiquidCrystal.h>
 #include "SdsDustSensor.h"
 #include <FastLED.h>
 
-// How many leds in your strip?
+// Define LED stuff
 #define NUM_LEDS 1
-#define LED_PIN A1
+#define LED_PIN 15 //A1
 CRGB leds[NUM_LEDS];
+int r = 255;
+int g = 0;
+int b = 0;
+int t; //temp led value
+int count = 0;
 
+// LCD screen
 int rxPin = 0;
 int txPin = 1;
-SdsDustSensor sds(rxPin, txPin);
 
+// Dust sensor
+SdsDustSensor sds(rxPin, txPin);
 // initialize the library by associating any needed LCD interface pin
 // with the arduino pin number it is connected to
 const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
@@ -33,12 +46,8 @@ void setup() {
 }
 
 void loop() {
-  // Turn off the display:
-//  lcd.noDisplay();
-//  delay(500);
-  // Turn on the display:
-//  lcd.display();
-//  delay(500);
+  leds[0] = CRGB::Black;
+  FastLED.show();
 
   PmResult pm = sds.readPm();
   if (pm.isOk()) {
@@ -50,6 +59,26 @@ void loop() {
 
     // if you want to just print the measured values, you can use toString() method as well
     Serial.println(pm.toString());
+
+    if ((pm.pm25 == 0.69) || (pm.pm25 == 6.9) || (pm.pm25 == 4.2) || (pm.pm10 == 0.69) || (pm.pm10 == 6.9) || (pm.pm10 == 4.2)){
+//      if (1){
+      // turn on
+      while (count<10){
+        leds[0] = CRGB(r,g,b);
+        FastLED.show();
+        delay(100);
+        t = r;
+        r = g;
+        g = b;
+        b = t;
+        count += 1;
+      }
+      // Then off again
+      leds[0] = CRGB::Black;
+      FastLED.show();
+      count = 0;
+    }
+    
   } else {
     // notice that loop delay is set to 0.5s and some reads are not available
     lcd.clear();
@@ -60,18 +89,6 @@ void loop() {
   }
 //  lcd.print("                        ");
   lcd.home();
-//  lcd.clear();
   delay(500);
-
-/*
-  // Turn the LED on, then pause
-  leds[0] = CRGB(1,125,125);
-  FastLED.show();
-  delay(500);
-  // Now turn the LED off, then pause
-  leds[0] = CRGB::Black;
-  FastLED.show();
-  delay(500);
-*/
-  
+//  lcd.clear();   
 }
